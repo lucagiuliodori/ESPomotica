@@ -1,0 +1,78 @@
+Ogni dispositivo è connesso alla rete WiFi e possiede internamente una pagina HTML per la sua gestione.
+Inoltre ogni dispositivo possiede una serie di "oggetti" (virtuali) con i quali si può interagire tramite letture
+e scritture e grazie ai quali, il dispositivo esegue determinate azioni.
+
+Le risposte provenienti dal dispositivo, a seguito di una lettura o scrittura di un oggetto, saranno in formato JSON.
+
+La quantità e la tipologia di oggetti virtuali, dipende dal dispositivo e quindi dalle sue funzioni.
+L'oggetto "info" esiste sempre e comunque e serve per chiedere informazioni del dispositivo. Facendo una lettura
+di questo oggetto (la scrittura non è possibile) verranno restituite, oltre alle informazioni puramente descrittive
+dispositivo, anche la lista di tutti gli oggetti virtuali e quindi le loro proprietà.
+
+Per configurare il dispositivo può essere usato l'oggetto virtuale "config" (con valore di "type" uguale a "CONFIG").
+
+Esempio risposta lettura oggetto "info":
+			{																	-> inizio JSON
+				"info":															-> indica l'inizio dell'oggetto richiesto (info)
+				{
+					"name": "Switch - ESPertino",								-> nome dispositivo
+					"objects":													-> indica l'inizio della lista di oggetti virtuali
+					{
+						"info":													-> oggetto "info"; questa stringa è univoca ed è usata come ID dell'oggetto virtuale (max 256)
+						{
+							"type": "INFO",										-> tipologia dell'oggetto virtuale
+							"values": "STRING",									-> valori permessi per la lettura/scrittura dell'oggetto virtuale
+							"access": "R",										-> tipo di accesso all'oggetto virtuale. Può essere di lettura (R), scrittura (W) o lettura e scrittura (RW)
+							"name": "Info",										-> nome oggetto virtuale
+							"description": "Invio informazione dispositivo",	-> descrizione dell'oggetto virtuale
+						},
+						"relay1":												-> oggetto "relay1"; questa stringa è univoca ed è usata come ID dell'oggetto virtuale (max 256)
+						{
+							"type": "SWITCH"									-> tipologia dell'oggetto virtuale
+							"values": ["H","L"],								-> valori permessi per la lettura/scrittura dell'oggetto virtuale
+							"access": "RW",										-> tipo di accesso all'oggetto virtuale. Può essere di lettura (R), scrittura (W) o lettura e scrittura (RW)
+							"name": "Relay1",									-> nome oggetto virtuale
+							"description": "Primo relay su scheda ESPertino",	-> descrizione dell'oggetto virtuale
+						},
+						"relay2":												-> oggetto "relay1"; questa stringa è univoca ed è usata come ID dell'oggetto virtuale (max 256)
+						{
+							"type": "SWITCH"									-> tipologia dell'oggetto virtuale
+							"values": ["H","L"],								-> valori permessi per la lettura/scrittura dell'oggetto virtuale
+							"access": "RW",										-> tipo di accesso all'oggetto virtuale. Può essere di lettura (R), scrittura (W) o lettura e scrittura (RW)
+							"name": "Relay1",									-> nome oggetto virtuale
+							"description": "Secondo relay su scheda ESPertino",	-> descrizione dell'oggetto virtuale
+						},
+					}
+				}
+			}																	-> fine JSON
+
+Il vantaggio di usare il JSON sta nel fatto che i campi appena visti possono essere integrati per usi futuri e per avere maggiori informazioni
+su ogni singolo oggetto virtuale o sul dispositivo. Ad esempio se si vuole realizzare un'interfaccia utente autoconfigurante, al precedente JSON possono essere aggiunti
+degli URL delle immagini da usare per ogni oggetto.
+
+
+Tutte le comunicazioni vengono fatte tramite chiamate HTTP con parametri in POST:
+			
+- Chiamata a indirizzo del dispositivo senza parametri in POST -> risposta con pagine web.
+- Chiamata a indirizzo del dispositivo con parametro "ORD" in POST -> lettura oggetto.
+- Chiamata a indirizzo del dispositivo con parametro "OWR" in POST -> scrittura oggetto.
+
+Esempi di parametri in POST:
+	- ORD&info				-> lettura oggetto "info"
+	- ORD&relay1			-> lettura valore oggetto "relay1"
+	- OWR&relay2=H			-> scrittura valore "H" sull'oggetto "relay2"
+
+	
+Le risposte ai comandi saranno stringhe in JSON che dipendono dall'oggetto.
+
+Esempi di risposte:
+	- ORD&info				-> stringa in JSON contenente tutte le info
+	- ORD&relay1			-> stato del relay1:
+								{"relay1":{"value":"L"}}
+	-OWR&relay2=H			-> stato relay2:
+								{"relay2":{"value":"H"}}
+								
+	
+La pagina web del dispositivo conosce già gli oggetti virtuali del dispositivo quindi sarà costruta in maniera opportuna. Si può pensare di costruire una funzione in JavaScript per
+l'autocostruzione della pagina web a partire dal JSON.
+Sulla base dello stesso principio della pagina web, si può pensare di creare una funzione in C generica, per la ricezione e l'invio di comandi al client.

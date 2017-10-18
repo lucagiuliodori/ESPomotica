@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="it">
+	<head>
+		<title>ESPertino - Switch</title>
+		<style>
+			div.divMethod {
+				font-family: arial, sans-serif;
+				position: absolute;
+				top: 5%;
+			}			
+			
+			select.selMethod {
+				font-family: arial, sans-serif;
+				position: absolute;
+				top: 5%;
+				left: 70px;
+			}			
+			
+			table {
+				font-family: arial, sans-serif;
+				border-collapse: collapse;
+				width: 100%;
+				position: absolute;
+				top: 10%
+			}
+
+			table.stateTable {
+				position: absolute;
+				top: 90%;
+			}
+			
+			td, th {
+				border: 1px solid #dddddd;
+				text-align: left;
+				padding: 8px;
+			}
+			
+			td.smallCols {
+				width: 15%;
+			}
+			
+			td.stateCols {
+				background-color: #b0c4de;
+				color: #ffffff;
+			}
+
+			td.stateSmallCols {
+				background-color: #b0c4de;
+				color: #ffffff;
+				width: 15%;
+			}
+			
+			tr:nth-child(even) {
+				background-color: #dddddd;
+			}
+		</style>
+		<script type="text/javascript">
+			var TIMEOUT_HTTPCONNECTION=10000;
+			var getStatesRelays=false;
+			var objHttpTimeout=null;
+			var stateRelay1=false;
+			var stateRelay2=false;
+
+			function sendHttpAsync(url,callback,callbackTimeout,params,method)
+			{
+				var http = new XMLHttpRequest();
+				
+				objHttpTimeout=setTimeout(callbackTimeout,TIMEOUT_HTTPCONNECTION);
+				method=method||"GET";
+				if(method=="GET")
+					http.open(method,url+"?"+params,true);
+				else if(method=="POST")
+				{
+					http.open(method,url,true);
+					//Send the proper header information along with the request
+					http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				}
+				http.onreadystatechange = function()
+				{
+					//Call a function when the state changes.
+					if(http.readyState == 4 && http.status == 200)
+					{
+						if(objHttpTimeout!=null)
+							clearTimeout(objHttpTimeout);
+						if(callback!=null)
+							callback(http.responseText);
+					}
+				}
+				if(method=="GET")
+					http.send(null);
+				else if(method=="POST")
+					http.send(params);
+			}
+
+			function httpTimeout()
+			{
+				document.getElementById("comState").innerHTML="HTTP Timeout expired!";
+			}
+			
+			function sendReqGetInfo()
+			{
+				sendHttpAsync(window.location.href,parseReplyInfo,httpTimeout,"ORD&info","POST");
+			}
+
+			function sendReqGetStateRelay1()
+			{
+				sendHttpAsync(window.location.href,parseReplyStateRelay1,httpTimeout,"ORD&relay1","POST");
+			}
+
+			function sendReqGetStateRelay2()
+			{
+				sendHttpAsync(window.location.href,parseReplyStateRelay2,httpTimeout,"ORD&relay2","POST");
+			}
+
+			function sendReqSetStateRelay1(state)
+			{
+				if(state)
+					sendHttpAsync(window.location.href,parseReplyStateRelay1,httpTimeout,"OWR&relay1=H","POST");
+				else
+					sendHttpAsync(window.location.href,parseReplyStateRelay1,httpTimeout,"OWR&relay1=L","POST");
+			}
+
+			function sendReqSetStateRelay2(state)
+			{
+				if(state)
+					sendHttpAsync(window.location.href,parseReplyStateRelay2,httpTimeout,"OWR&relay2=H","POST");
+				else
+					sendHttpAsync(window.location.href,parseReplyStateRelay2,httpTimeout,"OWR&relay2=L","POST");
+			}
+			
+			function updateRelaysStates()
+			{
+				getStatesRelay=true;
+				sendReqGetStateRelay1();
+			}
+			
+			function swicthStateRelay1()
+			{
+				stateRelay1=!stateRelay1;
+				sendReqSetStateRelay1(stateRelay1);
+			}
+
+			function swicthStateRelay2()
+			{
+				stateRelay2=!stateRelay2;
+				sendReqSetStateRelay2(stateRelay2);
+			}
+
+			function parseReplyInfo(data)
+			{
+				var objHtml;
+
+				//Set html object.
+				objHtml=document.getElementById("valueInfo");
+				//Set value.
+				data=data.replace(/\r?\n/g, "<br />");
+				data=data.replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+				objHtml.innerHTML=data;
+			}
+			
+			function parseReplyStateRelay1(data)
+			{
+				var state;
+				var objHtml;
+				var objInfo;
+
+				//Set html object.
+				objHtml=document.getElementById("valueRelay1");
+				
+				//Parse JSON.
+				objInfo=JSON.parse(data);
+				if(objInfo.relay1!=null)
+				{
+					if(objInfo.relay1.value!=null)
+					{
+						if(objInfo.relay1.value=="H")
+						{
+							stateRelay1=true;
+							objHtml.innerHTML="RELAY1 ON";
+						}
+						else if(objInfo.relay1.value=="L")
+						{
+							stateRelay1=false;
+							objHtml.innerHTML="RELAY1 OFF";
+						}
+						else
+							objHtml.innerHTML="RELAY1 ?";
+					}
+					else
+						objHtml.innerHTML="RELAY1 ?";
+				}
+				else
+					objHtml.innerHTML="RELAY1 ?";
+				
+				if(getStatesRelay)
+				{
+					getStatesRelay=false;
+					sendReqGetStateRelay2();
+				}
+				document.getElementById("comState").innerHTML="HTTP communication ok!";
+			}
+
+			function parseReplyStateRelay2(data)
+			{
+				var state;
+				var objHtml;
+				var objInfo;
+
+				//Set html object.
+				objHtml=document.getElementById("valueRelay2");
+				
+				//Parse JSON.
+				objInfo=JSON.parse(data);
+				if(objInfo.relay2!=null)
+				{
+					if(objInfo.relay2.value!=null)
+					{
+						if(objInfo.relay2.value=="H")
+						{
+							stateRelay2=true;
+							objHtml.innerHTML="RELAY2 ON";
+						}
+						else if(objInfo.relay2.value=="L")
+						{
+							stateRelay2=false;
+							objHtml.innerHTML="RELAY2 OFF";
+						}
+						else
+							objHtml.innerHTML="RELAY2 ?";
+					}
+					else
+						objHtml.innerHTML="RELAY2 ?";
+				}
+				else
+					objHtml.innerHTML="RELAY2 ?";
+
+				if(getStatesRelay)
+				{
+					getStatesRelay=false;
+					sendReqGetStateRelay1();
+				}
+				document.getElementById("comState").innerHTML="HTTP communication ok!";
+			}
+		</script>
+	</head>
+	<body onload="javascript:updateRelaysStates()">
+		<table class="stateTable">
+		  <tr>
+			<td class="stateSmallCols">Comunication state:</td>
+			<td class="stateCols"><div id="comState">-</div></td>
+		  </tr>
+		</table>
+		<table>
+		  <tr>
+			<th class="smallCols">Object</th>
+			<th class="smallCols">Command</th>
+			<th>Value</th>
+		  </tr>
+		  <tr>
+			<td class="smallCols">Relay 1</td>
+			<td class="smallCols"><button type="button" onclick="javascript:swicthStateRelay1()">Switch relay1</button></td>
+			<td><div id="valueRelay1">?</div></td>
+		  </tr>
+		  <tr>
+			<td class="smallCols">Relay 2</td>
+			<td class="smallCols"><button type="button" onclick="javascript:swicthStateRelay2()">Switch relay2</button></td>
+			<td><div id="valueRelay2">?</div></td>
+		  </tr>
+		  <tr>
+			<td class="smallCols">Info</td>
+			<td class="smallCols"><button type="button" onclick="javascript:sendReqGetInfo()">Get Info</button></td>
+			<td><div id="valueInfo">-</div></td>
+		  </tr>
+		</table>
+	</body>
+</html>

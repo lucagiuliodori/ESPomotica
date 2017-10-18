@@ -1,0 +1,33 @@
+{
+	"info":
+	{
+		"name": "Switch - ESPertino",
+		"objects":
+		{
+			"info":
+			{
+				"type": "INFO",
+				"values": "STRING",
+				"access": "R",
+				"name": "Info",
+				"description": "Invio informazione dispositivo"
+			},
+			"relay1":
+			{
+				"type": "SWITCH",
+				"values": ["H","L"],
+				"access": "RW",
+				"name": "Relay1",
+				"description": "Primo relay su scheda ESPertino"
+			},
+			"relay2":
+			{
+				"type": "SWITCH",
+				"values": ["H","L"],
+				"access": "RW",
+				"name": "Relay1",
+				"description": "Secondo relay su scheda ESPertino"
+			}
+		}
+	}
+}

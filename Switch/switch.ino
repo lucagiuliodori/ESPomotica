@@ -52,7 +52,7 @@ void exOperations(WiFiClient *client)
   if(isSendStateInfo)
   {
     isSendStateInfo=false;
-    espdom.sendHttp(client,(char*)info);
+    espdom.sendResponseHttp(client,(char*)info);
     Serial.println("info sent");                    // print a message out the serial port
   }
   else if(isSendStateRelay1)
@@ -69,7 +69,7 @@ void exOperations(WiFiClient *client)
   }
   else
   {
-    espdom.sendHttp(client,(char*)webpage);
+    espdom.sendResponseHttp(client,(char*)webpage);
     Serial.println("HTML sent");                    // print a message out the serial port
   }
 }
